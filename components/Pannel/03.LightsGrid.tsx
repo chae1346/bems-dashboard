@@ -10,9 +10,9 @@ export function LightGrid() {
   const [viewMode, setViewMode] = useState<'grid' | 'group'>('grid');
 
   const lights: LightState[] = [
-    { id: "L1", label: "L1", group: "Left", brightness: 100 }, { id: "L2", label: "L2", group: "Left", brightness: 90 }, { id: "L3", label: "L3", group: "Left", brightness: 45 },
-    { id: "M1", label: "M1", group: "Middle", brightness: 95 }, { id: "M2", label: "M2", group: "Middle", brightness: 75 }, { id: "M3", label: "M3", group: "Middle", brightness: 20 },
-    { id: "R1", label: "R1", group: "Right", brightness: 55 }, { id: "R2", label: "R2", group: "Right", brightness: 40 }, { id: "R3", label: "R3", group: "Right", brightness: 0 },
+    { id: "L1", label: "L1", group: "Left", brightness: 10 }, { id: "L2", label: "L2", group: "Left", brightness: 90 }, { id: "L3", label: "L3", group: "Left", brightness: 45 },
+    { id: "M1", label: "M1", group: "Middle", brightness: 100 }, { id: "M2", label: "M2", group: "Middle", brightness: 75 }, { id: "M3", label: "M3", group: "Middle", brightness: 20 },
+    { id: "R1", label: "R1", group: "Right", brightness: 100 }, { id: "R2", label: "R2", group: "Right", brightness: 40 }, { id: "R3", label: "R3", group: "Right", brightness: 0 },
   ];
 
   const leftLights = lights.filter(l => l.group === 'Left');
