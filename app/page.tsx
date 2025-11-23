@@ -133,28 +133,130 @@ export default function Home() {
 
       // 1) 파이썬 계산 API 호출
       try {
-          const calcResponse = await fetch('/api/calculate', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ targetLux: targetLux }),
-          });
-          
-          if (!calcResponse.ok) {
-              throw new Error(`계산 API 실패: ${calcResponse.statusText}`);
-          }
-          
-          const result = await calcResponse.json(); 
-          console.log("[PAGE] 조도값에 따라 조명 밝기 레벨을 계산하였습니다.");
-          // result는 { levelW: 10, levelR: 60 } 형태여야 함.
+        const calcResponse = await fetch("/api/calculate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ targetLux: targetLux }),
+        });
+
+        if (!calcResponse.ok) {
+          throw new Error(`계산 API 실패: ${calcResponse.statusText}`);
+        }
+
+        const result = await calcResponse.json();
+        console.log("[PAGE] 조도값에 따라 조명 밝기 레벨을 계산하였습니다.");
+        // result는 { levelW: 10, levelR: 60 } 형태여야 함.
 
         // 2) 계산된 결과를 받아 handleControlSubmit으로 제어 시작
         await handleControlSubmit(result.levelL, result.levelC, result.levelR);
       } catch (e) {
         console.error("제어 루프 중 계산 실패:", e);
         setError("자동 제어 계산 중 오류가 발생했습니다.");
+        console.error("제어 루프 중 계산 실패:", e);
+        setError("자동 제어 계산 중 오류가 발생했습니다.");
       }
     };
     carculationAndControl();
+  }, [targetLux, handleControlSubmit]);
+
+  useEffect(() => {
+    if (viewerInitialized.current) return;
+
+    let checkInterval: NodeJS.Timeout | null = null;
+    let containerCheckInterval: NodeJS.Timeout | null = null;
+    let timeoutCount = 0;
+    const MAX_TIMEOUT = 50;
+
+    const initViewer = async () => {
+      if (viewerInitialized.current) return;
+      try {
+        if (typeof window === "undefined") return;
+
+        const checkAutodesk = () => {
+          return (
+            (window as any).Autodesk?.Viewing &&
+            (window as any).Autodesk?.Tandem?.DtApp
+          );
+        };
+
+        if (!checkAutodesk()) {
+          timeoutCount++;
+          if (timeoutCount > MAX_TIMEOUT) {
+            console.error("Autodesk SDK 로딩 타임아웃");
+            setError("Autodesk SDK 로딩 실패");
+            return;
+          }
+          checkInterval = setInterval(() => {
+            if (checkAutodesk()) {
+              if (checkInterval) clearInterval(checkInterval);
+              initViewer();
+            }
+          }, 200);
+          return;
+        }
+
+        console.log("뷰어 초기화 중...");
+        const viewer = TandemViewer.instance;
+        await viewer.initialize(viewerContainerRef.current!);
+
+        const targetUrn = process.env.NEXT_PUBLIC_FACILITY_URN;
+        if (targetUrn) {
+          try {
+            await viewer.openFacilityByUrn(targetUrn);
+            viewer.setupViewerOptions();
+            console.log("모델 로드 완료");
+          } catch (facilityError) {
+            console.error("모델 로드 실패:", facilityError);
+            setError(
+              `모델 로드 실패: ${
+                facilityError instanceof Error
+                  ? facilityError.message
+                  : "Unknown error"
+              }`
+            );
+          }
+        } else {
+          console.warn("NEXT_PUBLIC_FACILITY_URN이 설정되지 않았습니다");
+        }
+
+        viewerInitialized.current = true;
+      } catch (err) {
+        console.error("뷰어 초기화 실패:", err);
+        setError(
+          `뷰어 초기화 실패: ${
+            err instanceof Error ? err.message : "Unknown error"
+          }`
+        );
+      }
+    };
+
+    const waitForContainer = () => {
+      if (viewerContainerRef.current) {
+        if (containerCheckInterval) clearInterval(containerCheckInterval);
+        return true;
+      }
+      return false;
+    };
+
+    if (!waitForContainer()) {
+      containerCheckInterval = setInterval(() => {
+        if (waitForContainer()) {
+          initViewer();
+        }
+      }, 100);
+      return () => {
+        if (checkInterval) clearInterval(checkInterval);
+        if (containerCheckInterval) clearInterval(containerCheckInterval);
+      };
+    }
+
+    initViewer();
+
+    return () => {
+      if (checkInterval) clearInterval(checkInterval);
+      if (containerCheckInterval) clearInterval(containerCheckInterval);
+    };
+  }, []);
   }, [targetLux, handleControlSubmit]);
 
   useEffect(() => {
