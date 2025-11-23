@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 const ST_BASE = process.env.SMARTTHINGS_BASE_URL ?? "https://api.smartthings.com/v1";
-const ST_PAT = process.env.SMARTTHINGS_PAT;
+const ST_PAT = process.env.SMARTTHINGS_PAT?.trim();
 
 const SENSOR_IDS = (process.env.SMARTTHINGS_SENSOR_IDS ?? "")
   .split(",")
@@ -12,9 +12,6 @@ const LIGHT_IDS = (process.env.SMARTTHINGS_LIGHT_IDS ?? "")
   .split(",")
   .map((v) => v.trim())
   .filter(Boolean);
-  
-console.log("LIGHT_IDS array size:", LIGHT_IDS.length); 
-console.log("LIGHT_IDS array content:", LIGHT_IDS);
 
 async function fetchStatus(id: string, headers: Record<string, string>) {
   const res = await fetch(`${ST_BASE}/devices/${id}/status`, {
@@ -25,11 +22,13 @@ async function fetchStatus(id: string, headers: Record<string, string>) {
 
   if (!res.ok) {
     const text = await res.text();
-    console.error("SmartThings status error:", id, text);
+    console.error("SmartThings 통신 실패:", id, text);
     return null;
   }
+  else {
+    console.log(`SmartThings 통신 성공: ID [${id}]`)
+  }
 
-  // SmartThings에서 내려준 JSON 그대로 리턴
   return res.json();
 }
 
@@ -102,5 +101,7 @@ export async function GET() {
     };
   });
 
+  console.log("[SENSOR API] 센서 목록 (총 %d개):", sensors.length, sensors.map(s => `[${s.name}: ${s.lux} lx]`));
+  console.log("[SENSOR API] 조명 목록 (총 %d개):", lights.length, lights.map(l => `[${l.name}: ${l.brightness}%]`));
   return NextResponse.json({ sensors, lights });
 }

@@ -5,8 +5,8 @@ import { useState } from "react";
 type PresetMode = "일반" | "수업" | "발표" | "자습";
 
 interface ControllerProps {
-    value: number;
-    onValueChange: (newValue: number) => void;
+    value: number; // 현재 조도값
+    onValueChange: (newValue: number) => void; // 설정 조도값
 }
 
 export function Controller({ value, onValueChange }: ControllerProps) {
@@ -21,7 +21,7 @@ export function Controller({ value, onValueChange }: ControllerProps) {
 
     const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         onValueChange(Number(e.target.value));
-        setActivePreset("일반"); // 슬라이더 조작 시 프리셋 표시 해제(혹은 일반으로)
+        setActivePreset("일반"); // 슬라이더 조작 시 프리셋 표시 일반으로
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -31,7 +31,7 @@ export function Controller({ value, onValueChange }: ControllerProps) {
             return;
         }
         let numValue = Number(inputValue);
-        if (numValue > 1500) numValue = 1500;
+        if (numValue > 300) numValue = 300;
         if (numValue < 0) numValue = 0;
         onValueChange(numValue);
     };
@@ -44,7 +44,7 @@ export function Controller({ value, onValueChange }: ControllerProps) {
 
     const handlePresetClick = (mode: PresetMode, lux: number) => {
         setActivePreset(mode);
-        onValueChange(lux); // 부모에게 변경된 값 전달
+        onValueChange(lux);
     };
 
     return (
@@ -56,14 +56,14 @@ export function Controller({ value, onValueChange }: ControllerProps) {
                     <input
                         type="range"
                         min={0}
-                        max={1500}
+                        max={300}
                         value={value}
                         onChange={handleSliderChange}
                         className="w-full accent-black cursor-pointer h-2 bg-gray-200 rounded-lg appearance-none"
                     />
                     <div className="flex justify-between text-xs text-gray-400">
                         <span>0 lx</span>
-                        <span>1500 lx</span>
+                        <span>300 lx</span>
                     </div>
                 </div>
 
