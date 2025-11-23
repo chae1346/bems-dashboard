@@ -69,8 +69,9 @@ export async function POST(req: NextRequest) {
 
         // 5. 계산된 levelW, levelR 값을 프론트엔드에 반환
         return NextResponse.json({ 
-            levelW: result.levelW, 
-            levelR: result.levelR 
+            levelL: result.levelL, 
+            levelC: result.levelC,
+            levelR: result.levelR 
         });
 
     } catch (error: any) {

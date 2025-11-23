@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Title } from "@/components/Title"; // 활성화
 import { Controller } from "@/components/Pannel/01.Controller";
-import Notification from "@/components/Pannel/04.Notification"; // 활성화
+import Notification from "@/components/Pannel/04.Notification";
 import SensorBar from "@/components/Pannel/02.SensorBar";
 import { LightGrid } from "@/components/Pannel/03.LightGrid";
 import { TandemViewer } from "@/utils/tandemViewer";
@@ -78,12 +78,12 @@ export default function Home() {
     }
   }, []);
 
-  // 2. 5초마다 상태 업데이트 (Polling)
+  // 2. 10초마다 상태 업데이트 (Polling)
   useEffect(() => {
     console.log("기기 상태를 업데이트 합니다.");
     fetchSensorData();
 
-    const intervalId = setInterval(fetchSensorData, 15000); 
+    const intervalId = setInterval(fetchSensorData, 10000); 
     return () => clearInterval(intervalId);
   }, [fetchSensorData]);
 
@@ -93,7 +93,7 @@ export default function Home() {
 
   // 1. 조명 제어 실행 (POST)
   const handleControlSubmit = useCallback(
-    async (levelW: number, levelR: number) => {
+    async (levelL: number, levelC: number, levelR: number) => {
       setIsLoading(true);
       setError(null);
       console.log("제어 명령을 전송합니다.");
@@ -101,7 +101,7 @@ export default function Home() {
         const response = await fetch("/api/control", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ levelW: levelW, levelR: levelR }),
+          body: JSON.stringify({ levelL: levelL, levelC: levelC, levelR: levelR }),
         });
 
         if (!response.ok) {
@@ -148,7 +148,7 @@ export default function Home() {
           // result는 { levelW: 10, levelR: 60 } 형태여야 함.
 
         // 2) 계산된 결과를 받아 handleControlSubmit으로 제어 시작
-        await handleControlSubmit(result.levelW, result.levelR);
+        await handleControlSubmit(result.levelL, result.levelC, result.levelR);
       } catch (e) {
         console.error("제어 루프 중 계산 실패:", e);
         setError("자동 제어 계산 중 오류가 발생했습니다.");

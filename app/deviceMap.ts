@@ -20,9 +20,7 @@ export const SENSOR_DISPLAY_MAP: Record<
   string, 
   { name: string, color: string }
 > = {
-    "afc898c9-94b4-499d-a479-014ffb9eab91": { name: "S1", color: "#ef4444" },
-    "86e62399-04e4-4b13-9224-1ea93fb77e5d": { name: "S2", color: "#f97316" },
-    "a7a0613b-a65c-49b4-a185-84e1845a5609": { name: "S3", color: "#eab308" },
-    "S4_ID_ASD": { name: "S4", color: "#22c55e" },
-    "S5_ID_FGH": { name: "S5", color: "#3b82f6" },
+    "86e62399-04e4-4b13-9224-1ea93fb77e5d": { name: "S1", color: "#ef4444" },
+    "a7a0613b-a65c-49b4-a185-84e1845a5609": { name: "S2", color: "#f97316" },
+    "afc898c9-94b4-499d-a479-014ffb9eab91": { name: "S3", color: "#eab308" }
 };

@@ -25,9 +25,7 @@ interface GraphSensorData extends SingleSensor {
 const STATIC_SENSOR_COLORS: { [key: string]: string } = {
   "S1": "#ef4444",
   "S2": "#f97316",
-  "S3": "#eab308",
-  "s4": "#22c55e",
-  "s5": "#3b82f6",
+  "S3": "#eab308"
 };
 
 export default function SensorSidebar({ targetLux, sensorData }: SensorBarProps) {

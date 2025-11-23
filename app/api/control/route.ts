@@ -21,8 +21,8 @@ const LIGHT_IDS = (process.env.SMARTTHINGS_LIGHT_IDS ?? "")
 // POST 요청이 들어올 때 실행 (조명 밝기 제어 엔드포인트)
 export async function POST(req: NextRequest) {
   console.log("[CONTROL API] 제어 요청 수신");
-  console.log(`PAT status: ${ST_PAT ? 'OK' : 'MISSING'}`);
-  console.log(`LIGHT_IDS count: ${LIGHT_IDS.length}`);
+  console.log(`[CONTROL API] PAT status: ${ST_PAT ? 'OK' : 'MISSING'}`);
+  console.log(`[CONTROL API] 감지된 조명 개수: ${LIGHT_IDS.length}`);
 
   if (!ST_PAT || !LIGHT_IDS.length) {
     console.error("[CONTROL API] 환경변수 누락으로 500 응답.");
@@ -35,16 +35,18 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   
   // 1. 프론트엔드에서 계산된 levelW(창가)와 levelR(벽) 값을 읽고 유효성을 검증합니다.
-  const levelW = Number(body.levelW); 
+  const levelL = Number(body.levelL); 
+  const levelC = Number(body.levelc);
   const levelR = Number(body.levelR);
 
   // 2. 유효성 검증 및 정수화:
   // - levelW || 0: 입력이 유효하지 않은 숫자(NaN)이거나, null/undefined일 경우 안전하게 0으로 처리합니다.
   // - Math.round(): 밝기 레벨은 정수(%) 단위이므로 반올림합니다.
-  const finalLevelW = Math.round(levelW || 0);
+  const finalLevelL = Math.round(levelL || 0);
+  const finalLevelC = Math.round(levelC || 0);
   const finalLevelR = Math.round(levelR || 0);
 
-  console.log(`[CONTROL API] 최종 밝기 레벨: W=${levelW}%, R=${levelR}%`);
+  console.log(`[CONTROL API] 최종 밝기 레벨: L=${levelL}%, C=${levelC}%, R=${levelR}%`);
 
   const headers = {
       Authorization: `Bearer ${ST_PAT}`,
@@ -64,16 +66,16 @@ export async function POST(req: NextRequest) {
         // 3. 그룹에 따라 적용할 밝기 레벨 결정
         if (mapping && mapping.group === 'right') {
             // R 그룹에는 levelW 적용
-            levelToApply = finalLevelW;
+            levelToApply = finalLevelL;
             groupName = 'Window (W)';
         } else if (mapping && mapping.group === 'middle') {
             // M 그룹에는 levelR 적용
-            levelToApply = finalLevelR;
-            groupName = 'Wall (R)';
+            levelToApply = finalLevelC;
+            groupName = 'Wall (C)';
         } else if (mapping && mapping.group === 'left') {
             // L 그룹에는 levelW 적용
-            levelToApply = finalLevelW;
-            groupName = 'Window (W)';
+            levelToApply = finalLevelR;
+            groupName = 'Window (R)';
         } else {
             // 맵핑 정보가 없으면 안전을 위해 50% 적용
             levelToApply = 50;
@@ -104,7 +106,7 @@ export async function POST(req: NextRequest) {
     console.log(`[CONTROL API] 밝기 제어가 끝났습니다. ${ok}`);
 
     // 프론트엔드에 최종 제어 결과를 리턴
-    return NextResponse.json({ ok, levelW: finalLevelW, levelR: finalLevelR });
+    return NextResponse.json({ ok, levelL: finalLevelL, levelC: finalLevelC, levelR: finalLevelR });
   } catch (err: any) {
     console.error("SmartThings 밝기 제어 실패:", err);
     return NextResponse.json(
