@@ -12,7 +12,7 @@ interface APILightState {
 
 interface LightState extends APILightState {
     label: string; 
-    group: 'wallLeft' | 'wallMiddle' | 'window'; 
+    group: 'left' | 'middle' | 'right'; 
 }
 
 interface LightGridProps {
@@ -29,7 +29,7 @@ const mapAPIDataToUI = (apiLevels: APILightState[]): LightState[] => {
              return {
                  ...apiLight,
                  label: apiLight.name || apiLight.id, 
-                 group: 'wallMiddle', // 기본 그룹 (렌더링 오류 방지용)
+                 group: 'middle', // 기본 그룹 (렌더링 오류 방지용)
             } as LightState; 
         }
         
@@ -46,9 +46,9 @@ export function LightGrid({ lightLevels }: LightGridProps) {
     
     const mappedLights = mapAPIDataToUI(lightLevels);
 
-    const leftLights = mappedLights.filter(l => l.group === 'wallLeft');
-    const centerLights = mappedLights.filter(l => l.group === 'wallMiddle');
-    const rightLights = mappedLights.filter(l => l.group === 'window');
+    const leftLights = mappedLights.filter(l => l.group === 'left');
+    const centerLights = mappedLights.filter(l => l.group === 'middle');
+    const rightLights = mappedLights.filter(l => l.group === 'right');
 
     const getAverage = (list: LightState[]) => {
         if (list.length === 0) return 0;

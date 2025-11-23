@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 // --- [타입 정의]
 interface LightGroupMapEntry { 
     label: string; 
-    group: 'wallLeft' | 'wallMiddle' | 'window'; 
+    group: 'left' | 'middle' | 'right'; 
 }
 type LightGroupMappingType = Record<string, LightGroupMapEntry>;
 
@@ -62,14 +62,18 @@ export async function POST(req: NextRequest) {
         let groupName: string;
         
         // 3. 그룹에 따라 적용할 밝기 레벨 결정
-        if (mapping && mapping.group === 'window') {
-            // R (Window) 그룹에는 levelW 적용
+        if (mapping && mapping.group === 'right') {
+            // R 그룹에는 levelW 적용
             levelToApply = finalLevelW;
             groupName = 'Window (W)';
-        } else if (mapping && (mapping.group === 'wallLeft' || mapping.group === 'wallMiddle')) {
-            // L (WallLeft) 또는 M (WallMiddle) 그룹에는 levelR 적용
+        } else if (mapping && mapping.group === 'middle') {
+            // M 그룹에는 levelR 적용
             levelToApply = finalLevelR;
             groupName = 'Wall (R)';
+        } else if (mapping && mapping.group === 'left') {
+            // L 그룹에는 levelW 적용
+            levelToApply = finalLevelW;
+            groupName = 'Window (W)';
         } else {
             // 맵핑 정보가 없으면 안전을 위해 50% 적용
             levelToApply = 50;

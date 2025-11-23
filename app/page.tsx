@@ -76,7 +76,7 @@ export default function Home() {
     console.log("기기 상태를 업데이트 합니다.");
     fetchSensorData();
 
-    const intervalId = setInterval(fetchSensorData, 5000); 
+    const intervalId = setInterval(fetchSensorData, 15000); 
     return () => clearInterval(intervalId);
   }, [fetchSensorData]);
 
@@ -120,7 +120,7 @@ export default function Home() {
 
     const carculationAndControl = async () => {
       if (targetLux === null || targetLux === undefined) return;
-      console.log("설정 조도값이 입력되었습니다.");
+      console.log(`[PAGE] 설정 조도값이 입력되었습니다: ${targetLux}`);
 
       // 1) 파이썬 계산 API 호출
       try {
@@ -135,7 +135,7 @@ export default function Home() {
           }
           
           const result = await calcResponse.json(); 
-          console.log("조도값에 따라 조명 밝기 레벨을 계산하였습니다.");
+          console.log("[PAGE] 조도값에 따라 조명 밝기 레벨을 계산하였습니다.");
           // result는 { levelW: 10, levelR: 60 } 형태여야 함.
 
           // 2) 계산된 결과를 받아 handleControlSubmit으로 제어 시작
