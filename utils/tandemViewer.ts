@@ -20,13 +20,6 @@ export class TandemViewer {
 
   constructor() {}
 
-  public reset(): void {
-    this.isInitialized = false;
-    this.viewer = null;
-    this.app = null;
-    this.facility = null;
-  }
-
   public async initialize(div: HTMLElement): Promise<void> {
     if (this.isInitialized) return;
     await this.initializeViewer(div);
@@ -104,24 +97,68 @@ export class TandemViewer {
   }
 
   async fetchFacilities() {
-    const teams = await this.app.getTeams();
-    const teamFacilitiesPromises = teams.map(async (team: any) => {
-      try {
-        return await team.getFacilities();
-      } catch {
-        return [];
+    if (!this.app) {
+      throw new Error("App is not initialized");
+    }
+
+    const allFacilities: any[] = [];
+
+    // 1. 공유받은 facility 조회 (getCurrentTeamsFacilities)
+    try {
+      const facilitiesSharedWithMe = await this.app.getCurrentTeamsFacilities();
+      if (facilitiesSharedWithMe) {
+        const sharedArray = Array.from(facilitiesSharedWithMe);
+        allFacilities.push(...sharedArray);
       }
-    });
-    const allTeamFacilities = await Promise.all(teamFacilitiesPromises);
-    const allFacilities = allTeamFacilities.flat();
+    } catch (error) {
+      console.warn("공유받은 facility 조회 실패:", error);
+    }
+
+    // 2. 사용자가 직접 만든 facility 조회 (getUsersFacilities)
+    try {
+      const myFacilities = await this.app.getUsersFacilities();
+      if (myFacilities) {
+        const myArray = Array.from(myFacilities);
+        allFacilities.push(...myArray);
+      }
+    } catch (error) {
+      console.warn("사용자 facility 조회 실패:", error);
+    }
+
+    // 3. 사용자가 멤버인 모든 팀의 facility 조회
+    try {
+      const teams = await this.app.getTeams();
+      if (teams && teams.length > 0) {
+        const teamFacilitiesPromises = teams.map(async (team: any) => {
+          try {
+            const facilities = await team.getFacilities();
+            return facilities ? Array.from(facilities) : [];
+          } catch (error) {
+            console.warn("팀 facility 조회 실패:", error);
+            return [];
+          }
+        });
+
+        const allTeamFacilities = await Promise.all(teamFacilitiesPromises);
+        allFacilities.push(...allTeamFacilities.flat());
+      }
+    } catch (error) {
+      console.warn("팀 facility 조회 실패:", error);
+    }
+
+    // 4. 모든 facility를 URN 기준으로 중복 제거
     const uniqueFacilities = new Map<string, any>();
     allFacilities.forEach((f: any) => {
+      if (!f) return;
       const urn = typeof f.urn === "function" ? f.urn() : f.twinId || f.urn;
       if (urn && !uniqueFacilities.has(urn)) {
         uniqueFacilities.set(urn, f);
       }
     });
-    return Array.from(uniqueFacilities.values());
+
+    const result = Array.from(uniqueFacilities.values());
+    console.log(`총 ${result.length}개의 Facility 발견`);
+    return result;
   }
 
   async openFacilityByUrn(urn: string) {
@@ -129,16 +166,38 @@ export class TandemViewer {
       throw new Error("Viewer is not initialized");
     }
 
+    if (!urn || typeof urn !== "string") {
+      throw new Error("Invalid URN provided");
+    }
+
     const facilities = await this.fetchFacilities();
+
+    if (!facilities || facilities.length === 0) {
+      throw new Error("사용자가 접근 가능한 Facility가 없습니다");
+    }
+
     const targetFacility = facilities.find((f: any) => {
+      if (!f) return false;
       const facilityUrn =
         typeof f.urn === "function" ? f.urn() : f.twinId || f.urn;
       return facilityUrn === urn;
     });
 
     if (!targetFacility) {
+      const availableUrns = facilities.map((f: any) => {
+        const facilityUrn =
+          typeof f.urn === "function" ? f.urn() : f.twinId || f.urn;
+        return facilityUrn;
+      });
       console.error("Facility를 찾을 수 없음. URN:", urn);
+      console.error("사용 가능한 Facility URNs:", availableUrns);
       throw new Error(`Facility with URN ${urn} not found`);
+    }
+
+    if (!this.viewer || !this.app) {
+      throw new Error(
+        "Viewer or App is not initialized before displayFacility"
+      );
     }
 
     const fac = await this.app.displayFacility(
@@ -147,38 +206,20 @@ export class TandemViewer {
       this.viewer,
       false
     );
-    if (!fac) throw new Error("Failed to display facility");
+
+    if (!fac) {
+      throw new Error(
+        "Failed to display facility: displayFacility returned null"
+      );
+    }
 
     this.facility = fac;
     return fac;
-  }
-
-  async openFacility(facilityInfo: any) {
-    if (!facilityInfo) throw new Error("Facility information is required");
-    if (typeof facilityInfo.urn !== "function")
-      throw new Error("facilityInfo must be a DtFacility instance");
-    if (!this.viewer) throw new Error("Viewer is not initialized");
-
-    const fac = await this.app.displayFacility(
-      facilityInfo,
-      false,
-      this.viewer,
-      false
-    );
-    if (!fac) throw new Error("Failed to display facility");
-
-    this.facility = fac;
-    return fac;
-  }
-
-  public getFacility() {
-    return this.facility;
   }
 
   public setupViewerOptions(): void {
     if (!this.viewer) return;
-    this.viewer.setLightPreset("Plaza");
-    this.viewer.setBackgroundColor(0, 30, 80, 255, 255, 255);
+    this.viewer.setLightPreset("Harbor");
     this.viewer.setDisplayEdges(true);
     this.viewer.setGroundShadow(true);
     this.disableLayers();
